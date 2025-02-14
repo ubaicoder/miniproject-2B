@@ -1,143 +1,122 @@
 "use client"
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { CloudArrowUpIcon, DocumentCheckIcon, SparklesIcon } from "@heroicons/react/24/outline"
+import { useDropzone } from "react-dropzone"
+import { motion } from "framer-motion"
+import { CloudArrowUpIcon, DocumentTextIcon, ChartBarIcon } from "@heroicons/react/24/outline"
 
-export default function HomePage() {
-  const [isDragging, setIsDragging] = useState(false)
+// First, install react-dropzone: npm install react-dropzone
+
+const HomePage = () => {
   const [file, setFile] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const navigate = useNavigate()
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
+  const onDrop = useCallback((acceptedFiles) => {
+    setFile(acceptedFiles[0])
+    simulateUpload()
+  }, [])
 
-  const handleDragLeave = () => {
-    setIsDragging(false)
-  }
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
 
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const droppedFile = e.dataTransfer.files[0]
-    handleFile(droppedFile)
-  }
-
-  const handleFileInput = (e) => {
-    const selectedFile = e.target.files[0]
-    handleFile(selectedFile)
-  }
-
-  const handleFile = async (file) => {
-    if (file && (file.type === "application/pdf" || file.type.includes("word"))) {
-      setFile(file)
-      setIsLoading(true)
-      // Simulate file processing
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      setIsLoading(false)
-      navigate("/results", { state: { fileName: file.name } })
-    }
+  const simulateUpload = () => {
+    let progress = 0
+    const interval = setInterval(() => {
+      progress += 10
+      setUploadProgress(progress)
+      if (progress >= 100) {
+        clearInterval(interval)
+        setTimeout(() => navigate("/results"), 500)
+      }
+    }, 200)
   }
 
   return (
-    <div className="min-h-screen pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-4xl font-extrabold sm:text-5xl md:text-6xl">
-              <span className="block">AI-Powered</span>
-              <span className="block gradient-text">Resume Analyzer</span>
-            </h1>
-            <p className="mt-3 max-w-md mx-auto text-base text-gray-500 dark:text-gray-400 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              Get instant feedback on your resume. Our AI-powered tool analyzes your resume for ATS compatibility,
-              formatting, and content optimization.
-            </p>
-          </motion.div>
+    <div className="container mx-auto px-4 py-12 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-900">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center"
+      >
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">AI-Powered Resume Analysis</h1>
+        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+          Upload your resume and get instant feedback to improve your chances of landing your dream job.
+        </p>
+      </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-10 max-w-3xl mx-auto"
-          >
-            <div
-              className={`upload-zone ${isDragging ? "dragging" : ""}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                id="file-upload"
-                className="sr-only"
-                accept=".pdf,.doc,.docx"
-                onChange={handleFileInput}
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
-                <div className="space-y-4 text-center">
-                  <div className="mx-auto h-12 w-12 text-gray-400">
-                    <CloudArrowUpIcon className="h-12 w-12" />
-                  </div>
-                  <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                    <span className="relative cursor-pointer rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                      Upload a file
-                    </span>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">PDF or Word up to 10MB</p>
-                </div>
-              </label>
-            </div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-20">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-              <div className="score-card">
-                <DocumentCheckIcon className="h-8 w-8 text-primary-600 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">ATS Compatible</h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Ensure your resume passes through Applicant Tracking Systems.
-                </p>
-              </div>
-              <div className="score-card">
-                <SparklesIcon className="h-8 w-8 text-primary-600 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Analysis</h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Get intelligent suggestions to improve your resume content.
-                </p>
-              </div>
-              <div className="score-card">
-                <DocumentCheckIcon className="h-8 w-8 text-primary-600 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Instant Results</h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Receive detailed feedback and scoring within seconds.
-                </p>
-              </div>
-            </div>
-          </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="max-w-md mx-auto"
+      >
+        <div
+          {...getRootProps()}
+          className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-all duration-300 bg-white dark:bg-gray-800 backdrop-filter backdrop-blur-lg bg-opacity-50 dark:bg-opacity-50 ${
+            isDragActive
+              ? "border-primary-500 bg-primary-50 dark:bg-primary-900"
+              : "border-gray-300 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900"
+          }`}
+        >
+          <input {...getInputProps()} />
+          <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+            Drag & drop your resume here, or click to select a file
+          </p>
         </div>
-      </div>
 
-      <AnimatePresence>
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center"
-          >
-            <div className="glass p-8 rounded-xl flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p className="mt-4 text-gray-900 dark:text-white">Analyzing your resume...</p>
+        {file && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300">{file.name}</p>
+            <div className="mt-2 h-2 bg-gray-200 rounded-full">
+              <div
+                className="h-full bg-primary-500 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8"
+      >
+        {[
+          {
+            icon: DocumentTextIcon,
+            title: "ATS-Friendly Analysis",
+            description: "Ensure your resume passes through Applicant Tracking Systems with our AI-powered analysis.",
+          },
+          {
+            icon: ChartBarIcon,
+            title: "Detailed Insights",
+            description: "Get comprehensive feedback on your resume's content, format, and keywords.",
+          },
+          {
+            icon: DocumentTextIcon,
+            title: "Improvement Suggestions",
+            description: "Receive personalized recommendations to enhance your resume and stand out to employers.",
+          },
+        ].map((item, index) => (
+          <motion.div
+            key={index}
+            whileHover={{ scale: 1.05 }}
+            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-50 dark:bg-opacity-50"
+          >
+            <item.icon className="h-12 w-12 text-primary-500 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{item.title}</h3>
+            <p className="text-gray-600 dark:text-gray-300">{item.description}</p>
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
   )
 }
+
+export default HomePage
 
